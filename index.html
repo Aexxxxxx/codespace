@@ -1,0 +1,99 @@
+<html>
+    <head>
+        <title>Code Editor</title>
+        <style>
+            html{
+                background-color: #111;
+                color: #eee;
+                font-family: monospace;
+            }
+
+        </style>
+    </head>
+    <body>
+        <h1>A simple code editor</h1>
+        <p>Keyboard shortcuts:</p>
+        <ul>
+            <li>Backspace: Delete character</li>
+            <li>Enter: New line</li>
+            <li>Tab: Insert 4 spaces</li>
+            <li>Control + D: Delete line</li>
+            <li>Control + S: Save file</li>
+            <li>Control + Z: Undo</li>
+            <li>Control + Alt + D: Delete everything</li>
+        </ul>
+        <div style="background-color: #117;">
+            <pre id="type"></pre>
+        </div>
+        <div id="debugconsole" style="display: none;">
+            <p>undoStack: <span id="undoCount">[]</span></p>
+        </div>
+        <script>
+            const text = document.getElementById('type');
+            let undoStack = [];
+            const undoCount = document.getElementById('undoCount');
+            let debug = false; // Set to true to enable debug 
+            if (debug) {
+                document.getElementById('debugconsole').style.display = 'block';
+            }
+            window.addEventListener('keydown', (event) => {
+                // Push the current state to the undo stack before making any changes
+                if (event.key == "Control" || event.key == "Alt" || event.key == "Shift") {
+                    return;
+                } // get rid of early problems before they arise
+                undoStack.push(text.textContent);
+                undoCount.textContent = JSON.stringify(undoStack);
+                if (event.key === 'Backspace') {
+                    text.textContent = text.textContent.slice(0, -1);
+                    return;
+                }
+                if (event.key === 'Enter') {
+                    text.textContent += '\n';
+                    return;
+                }
+                if (event.key === 'Tab') {
+                    text.textContent += '    ';
+                    event.preventDefault();
+                    return;
+                }
+                // Keyboard shortcut time :3
+                if (event.ctrlKey && event.altKey && event.key === 'd') {
+                    text.textContent = '';
+                    event.preventDefault();
+                    return;
+                }
+                if (event.ctrlKey && event.key === 'd') {
+                    const lines = text.textContent.split('\n');
+                    lines.pop();
+                    text.textContent = lines.join('\n');
+                    event.preventDefault(); // Ctrl-D is used on chrome to bookmark a page, so we need to prevent the default behavior.
+                    return;
+                }
+                if (event.ctrlKey && event.key === 's') {
+                    const blob = new Blob([text.textContent], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'file.txt';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    event.preventDefault();
+                    return;
+                }
+                if (event.ctrlKey && event.key === 'z') {
+                    // Undo functionality only works for the last action.
+                    if (undoStack.length > 0) {
+                        undoStack.pop(); // Remove the added state from the stack since we are undoing it.
+                        text.textContent = undoStack.pop(); // beep boop sdiybt
+                    }
+                    event.preventDefault();
+                    return;
+                }
+                if (event.key.length > 1) {
+                    return;
+                }
+                text.textContent += event.key;
+            });
+        </script>
+    </body>
+</html>
